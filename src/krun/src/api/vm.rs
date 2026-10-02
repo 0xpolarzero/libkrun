@@ -680,9 +680,15 @@ impl Vm {
         }
 
         #[cfg(all(not(feature = "tee"), target_os = "windows"))]
-        if self.vmr.fs.iter().any(|fs| fs.shm_size.is_some()) {
-            vmm::worker::start_worker_thread(_vmm.clone(), _receiver.clone())
-                .map_err(|e| Error::Runtime(RuntimeError::EventLoop(format!("{e:?}"))))?;
+        {
+            let needs_worker = self.vmr.fs.iter().any(|fs| fs.shm_size.is_some());
+            #[cfg(not(feature = "aws-nitro"))]
+            let needs_worker =
+                needs_worker || self.vmr.custom_fs.iter().any(|fs| fs.shm_size.is_some());
+            if needs_worker {
+                vmm::worker::start_worker_thread(_vmm.clone(), _receiver.clone())
+                    .map_err(|e| Error::Runtime(RuntimeError::EventLoop(format!("{e:?}"))))?;
+            }
         }
 
         #[cfg(any(feature = "amd-sev", feature = "tdx"))]

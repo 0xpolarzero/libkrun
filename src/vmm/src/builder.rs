@@ -2015,7 +2015,7 @@ pub fn build_microvm_paused(
         vm_resources.fs.len(),
         intc.clone(),
         exit_code,
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", target_os = "windows"))]
         _sender,
     )?;
     trace.mark("custom_fs.ready");
@@ -4354,7 +4354,7 @@ fn attach_custom_fs_devices(
     index_offset: usize,
     intc: IrqChip,
     exit_code: Arc<AtomicI32>,
-    #[cfg(target_os = "macos")] map_sender: Sender<WorkerMessage>,
+    #[cfg(any(target_os = "macos", target_os = "windows"))] map_sender: Sender<WorkerMessage>,
 ) -> std::result::Result<(), StartMicrovmError> {
     use self::StartMicrovmError::*;
 
@@ -4386,7 +4386,7 @@ fn attach_custom_fs_devices(
             });
         }
 
-        #[cfg(target_os = "macos")]
+        #[cfg(any(target_os = "macos", target_os = "windows"))]
         fs.lock().unwrap().set_map_sender(map_sender.clone());
 
         attach_mmio_device(vmm, id, intc.clone(), fs).map_err(RegisterFsDevice)?;
